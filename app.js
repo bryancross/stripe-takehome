@@ -1,8 +1,36 @@
+const jp = require('jsonpath');
 const express = require('express');
 const path = require('path');
 const exphbs = require('express-handlebars')
 const bodyParser = require('body-parser');
+const { exception } = require('console');
+//This doesn't seem ideal to commit to a repo
 const stripe = require('stripe')('sk_test_51JAzCYHvF1PnZH9PItbISxEqbtauawKEOabrBPnzx2RevgGBItDBLEWdszj69VpdfjBAsSzYZ76Ortcm0LD3H20J00MvOAO4Ns');
+
+const ProductInfoDB = 
+                [
+                {
+                  "id": 1
+                  ,"title": "The Art of Doing Science and Engineering"
+                  ,"amount": 2300
+                  ,"image_url": "https://i.imgur.com/kG5zQlp.jpg"
+                },
+                {
+                  "id": 2
+                  ,"title": "The Making of Prince of Persia: Journals 1985-1993"
+                  ,"amount": 2500
+                  ,"image_url": "https://i.imgur.com/2XQEEcc.jpg"
+                },
+                {
+                  "id": 3
+                  ,"title": "Working in Public: The Making and Maintenance of Open Source"
+                  ,"amount": 2800
+                  ,"image_url":"https://i.imgur.com/nLT2j9z.jpg"
+                }
+              ];
+
+
+
 
 var app = express();
 
@@ -26,6 +54,8 @@ app.use(express.urlencoded({verify: rawBodyBuffer, extended: true }));
 app.use(express.json({ verify: rawBodyBuffer }));
 
 
+
+
 /**
  * Home route
  */
@@ -40,33 +70,30 @@ app.get('/checkout', function(req, res) {
   // Just hardcoding amounts here to avoid using a database
   const item =req.query.item ;
   let title, amount, error;
-
-  switch (item) {
-    case '1':
-      title = "The Art of Doing Science and Engineering"
-      amount = 2300      
-      break;
-    case '2':
-      title = "The Making of Prince of Persia: Journals 1985-1993"
-      amount = 2500
-      break;     
-    case '3':
-      title = "Working in Public: The Making and Maintenance of Open Source"
-      amount = 2800  
-      break;     
-    default:
-      // Included in layout view, feel free to assign error
-      error = "No item selected yo"      
-      break;
+  let productInfo = getProductInfo(item);
+  if(typeof productInfo === 'undefined');
+  {
+    throw new exception('No product found for ID: ' + item);
   }
 
   res.render('checkout', {
-    title: title,
-    amount: amount,
-    item: item,
+    title: productInfo.title,
+    amount: productInfo.amount,
+    item: productInfo.id,
     error: error
   });
 });
+
+function getProductInfo(key_value, key_name) {
+  //if key is undefined, we'll default to 'id'
+  
+  if(typeof key_name === 'undefined')
+  {
+    key_name='id'
+  }
+  jpath = '$[?(@.' + key_name + '=="' + key_value + '")]';
+  return  jp.query(ProductInfoDB, jpath);
+}
 
 /**
  * Success route
@@ -78,7 +105,22 @@ app.get('/success', function(req, res) {
 async function doSuccess(req, res)
 {
   const session = await stripe.checkout.sessions.retrieve(req.query.session_id);
-  res.render('success');
+  const lineItems = await stripe.checkout.sessions.listLineItems(req.query.session_id);
+  const lineItem = lineItems.data[0];
+
+  res.render('success'), {
+    amount: lineItem.amount_total / 100
+  ,title: lineItem.description
+  ,email: session.customer_details.email
+  ,image_url: getProductInfo(lineItem.description,"title")[0].image_url
+  }
+  
+  /* 
+  , {
+  
+  ,image: 'asdf'
+  });
+  */
 }
 
 
@@ -108,6 +150,7 @@ app.listen(3000, () => {
 
 
 app.get('/create-checkout-session', async (req, res) => {
+  let productInfo = getProductInfo(req.query.item)[0];
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ['card'],
     line_items: [
@@ -115,10 +158,12 @@ app.get('/create-checkout-session', async (req, res) => {
         price_data: {
           currency: 'usd',
           product_data: {
-            name: 'Stubborn Attachments',
-            images: ['https://i.imgur.com/EHyR2nP.png'],
+            name: productInfo.title,
+            images: [productInfo.image_url]
+            //It's too bad this doesn't appear to be a thing
+            //metadata: {image_url: productInfo.image}
           },
-          unit_amount: 2000,
+          unit_amount: productInfo.amount,
         },
         quantity: 1,
       },
@@ -140,10 +185,10 @@ app.post('/create-checkout-session', async (req, res) => {
         price_data: {
           currency: 'usd',
           product_data: {
-            name: 'Stubborn Attachments',
-            images: ['https://i.imgur.com/EHyR2nP.png'],
+            name: productInfo.title,
+            images: [productInfo.image],
           },
-          unit_amount: 2000,
+          unit_amount: productInfo.amount,
         },
         quantity: 1,
       },
