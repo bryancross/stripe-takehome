@@ -6,10 +6,8 @@
     Select an item to purchase
   </p>
 </div>
-<form name="payment-form" action="/create-checkout-session?item=1" method="POST">
 <div class="mt-40 row">
   <div class="col">
-    
     <div class="card box-shadow">
       <img src="/images/art-science-eng.jpg" class="card-img-top" alt="...">
       <div class="card-body">
@@ -21,9 +19,7 @@
         <a href="/create-checkout-session?item=1" class="btn btn-primary btn-block">Purchase — $23</a>
       </div>
     </div>
-    </div>
   </div>
-  </form>
   <div class="col">
     <div class="card box-shadow">
       <img src="/images/prince-of-persia.jpg" class="card-img-top" alt="...">
@@ -46,8 +42,7 @@
         <p class="card-text mt-20">
           Nadia Eghbal takes an inside look at modern open sourc and offers a model through which to understand the challenges faced by online creators.
         </p>
-        <button type="submit" class="btn btn-lg btn-block btn-primary">Purchase $<span class="amount" data-amount="28" data-item="3"></span></button>
-        <!-- <a href="/create-checkout-session?item=3" method="POST" class="btn btn-primary btn-block">Purchase - $28</a> -->
+        <a href="/create-checkout-session?item=3" class="btn btn-primary btn-block">Purchase - $28</a>
       </div>
     </div>
   </div>

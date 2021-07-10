@@ -7,6 +7,14 @@ const { exception } = require('console');
 //This doesn't seem ideal to commit to a repo
 const stripe = require('stripe')('sk_test_51JAzCYHvF1PnZH9PItbISxEqbtauawKEOabrBPnzx2RevgGBItDBLEWdszj69VpdfjBAsSzYZ76Ortcm0LD3H20J00MvOAO4Ns');
 
+//Useful for formatting currencies
+const formatter = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+});
+
+//This is still a hack, but it's more useful and reusable than the original switch statement. 
+// Ideally we'd be using Stripe products for this.  
 const ProductInfoDB = 
                 [
                 {
@@ -29,10 +37,7 @@ const ProductInfoDB =
                 }
               ];
 
-
-
-
-var app = express();
+              var app = express();
 
 // view engine setup (Handlebars)
 app.engine('hbs', exphbs({
@@ -42,16 +47,10 @@ app.engine('hbs', exphbs({
 app.set('view engine', 'hbs');
 app.use(express.static(path.join(__dirname, 'public')));
 
-//This was a PITA
-//https://stackoverflow.com/questions/65157367/stripe-webhook-constructevent-method-is-returning-400-error-when-pointed-to-ec2
-
-const rawBodyBuffer = (req, res, buf, encoding) => {
-  if (buf && buf.length) {
-      req.rawBody = buf.toString();
-  }
-};
+/*
 app.use(express.urlencoded({verify: rawBodyBuffer, extended: true }));
 app.use(express.json({ verify: rawBodyBuffer }));
+*/
 
 
 
@@ -64,25 +63,11 @@ app.get('/', function(req, res) {
 });
 
 /**
- * Checkout route
- */
-app.get('/checkout', function(req, res) {
-  // Just hardcoding amounts here to avoid using a database
-  const item =req.query.item ;
-  let title, amount, error;
-  let productInfo = getProductInfo(item);
-  if(typeof productInfo === 'undefined');
-  {
-    throw new exception('No product found for ID: ' + item);
-  }
+NOTE: This seems to add no value when the smart checkout API is available, so I deleted it.   
+* Checkout route
+*/
 
-  res.render('checkout', {
-    title: productInfo.title,
-    amount: productInfo.amount,
-    item: productInfo.id,
-    error: error
-  });
-});
+
 
 function getProductInfo(key_value, key_name) {
   //if key is undefined, we'll default to 'id'
@@ -108,19 +93,17 @@ async function doSuccess(req, res)
   const lineItems = await stripe.checkout.sessions.listLineItems(req.query.session_id);
   const lineItem = lineItems.data[0];
 
-  res.render('success'), {
-    amount: lineItem.amount_total / 100
+//Looking up the image_url from the title is a hack.  But, it works.
+//Proper way to do this would be using Stripe products.  
+//Unfortunately trying to attach this to the lineitem metadata attribute doesn't seem to persist across the
+//transaction.  
+
+  res.render('success', {
+    amount: formatter.format(lineItem.amount_total / 100)
   ,title: lineItem.description
   ,email: session.customer_details.email
   ,image_url: getProductInfo(lineItem.description,"title")[0].image_url
-  }
-  
-  /* 
-  , {
-  
-  ,image: 'asdf'
   });
-  */
 }
 
 
@@ -163,7 +146,7 @@ app.get('/create-checkout-session', async (req, res) => {
             //It's too bad this doesn't appear to be a thing
             //metadata: {image_url: productInfo.image}
           },
-          unit_amount: productInfo.amount,
+          unit_amount: productInfo.amount
         },
         quantity: 1,
       },
@@ -176,27 +159,3 @@ app.get('/create-checkout-session', async (req, res) => {
   res.redirect(303, session.url)
 });
 
-
-app.post('/create-checkout-session', async (req, res) => {
-  const session = await stripe.checkout.sessions.create({
-    payment_method_types: ['card'],
-    line_items: [
-      {
-        price_data: {
-          currency: 'usd',
-          product_data: {
-            name: productInfo.title,
-            images: [productInfo.image],
-          },
-          unit_amount: productInfo.amount,
-        },
-        quantity: 1,
-      },
-    ],
-    mode: 'payment',
-    success_url: `http://localhost:3000/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `http://localhost:3000/cancel`,
-  });
-
-  res.redirect(303, session.url)
-});

@@ -1,3 +1,5 @@
+<script src="https://polyfill.io/v3/polyfill.min.js?version=3.52.1&features=fetch"></script>
+ <script src="https://js.stripe.com/v3/"></script>
 <main>
   <div class="mt-40 text-center text-success">
     <h1>
@@ -5,7 +7,19 @@
       Success!
     </h1>
   </div>
-  <div class="mt-40 text-center">
-    <div class="mt-20 text-center text-secondary border-placeholder">
-      <p>Add details about the payment here!</p>
-      Payment: <span class="amount" data-amount="{{amount}}"></span>
+        <h3>Your purchase details: </h3>
+        <table class="table">
+          <tr>
+            <td rowspan=3 class="mt-20 text-info"><img src="{{image_url}}" height=100 width=100 alt="{{title}}"/></td>
+          </tr>
+          <tr>
+            <td class="mt-20 text-info">Payment Amount</td>
+            <td class="card-text mt-20">{{amount}}</td>
+          </tr>
+          <tr>
+            <td class="mt-20 text-info">Description</td>
+            <td class="card-text mt-20">{{title}}</td>
+          </tr>
+        </table>
+        <p>Your receipt has been emailed to: {{email}}</p>
+      </main>
