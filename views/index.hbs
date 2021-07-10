@@ -6,8 +6,10 @@
     Select an item to purchase
   </p>
 </div>
+<form name="payment-form" action="/create-checkout-session?item=1" method="POST">
 <div class="mt-40 row">
   <div class="col">
+    
     <div class="card box-shadow">
       <img src="/images/art-science-eng.jpg" class="card-img-top" alt="...">
       <div class="card-body">
@@ -16,10 +18,12 @@
         <p class="card-text mt-20">
           The Art of Doing Science and Engineering is a reminder that a childlike capacity for learning and creativity are accessible to everyone.
         </p>
-        <a href="/checkout?item=1" class="btn btn-primary btn-block">Purchase — $23</a>
+        <a href="/create-checkout-session?item=1" class="btn btn-primary btn-block">Purchase — $23</a>
       </div>
     </div>
+    </div>
   </div>
+  </form>
   <div class="col">
     <div class="card box-shadow">
       <img src="/images/prince-of-persia.jpg" class="card-img-top" alt="...">
@@ -29,7 +33,7 @@
         <p class="card-text mt-20">
             In The Making of Prince of Persia, on the 30th anniversary of the game’s release, Mechner looks back at the journals he kept from 1985 to 1993..
         </p>
-        <a href="/checkout?item=2" class="btn btn-primary btn-block">Purchase - $25</a>
+        <a href="/create-checkout-session?item=2" class="btn btn-primary btn-block">Purchase - $25</a>
       </div>
     </div>
   </div>
@@ -42,7 +46,8 @@
         <p class="card-text mt-20">
           Nadia Eghbal takes an inside look at modern open sourc and offers a model through which to understand the challenges faced by online creators.
         </p>
-        <a href="/checkout?item=3" class="btn btn-primary btn-block">Purchase - $28</a>
+        <button type="submit" class="btn btn-lg btn-block btn-primary">Purchase $<span class="amount" data-amount="28" data-item="3"></span></button>
+        <!-- <a href="/create-checkout-session?item=3" method="POST" class="btn btn-primary btn-block">Purchase - $28</a> -->
       </div>
     </div>
   </div>

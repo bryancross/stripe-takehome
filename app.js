@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const exphbs = require('express-handlebars')
+const bodyParser = require('body-parser');
 const stripe = require('stripe')('sk_test_51JAzCYHvF1PnZH9PItbISxEqbtauawKEOabrBPnzx2RevgGBItDBLEWdszj69VpdfjBAsSzYZ76Ortcm0LD3H20J00MvOAO4Ns');
 
 var app = express();
@@ -13,15 +14,23 @@ app.engine('hbs', exphbs({
 app.set('view engine', 'hbs');
 app.use(express.static(path.join(__dirname, 'public')));
 
+//This was a PITA
+//https://stackoverflow.com/questions/65157367/stripe-webhook-constructevent-method-is-returning-400-error-when-pointed-to-ec2
+
+const rawBodyBuffer = (req, res, buf, encoding) => {
+  if (buf && buf.length) {
+      req.rawBody = buf.toString();
+  }
+};
+app.use(express.urlencoded({verify: rawBodyBuffer, extended: true }));
+app.use(express.json({ verify: rawBodyBuffer }));
+
+
 /**
  * Home route
  */
 app.get('/', function(req, res) {
   res.render('index');
-});
-
-app.get('/success', function(req,res) {
-  res.render('success');
 });
 
 /**
@@ -63,8 +72,32 @@ app.get('/checkout', function(req, res) {
  * Success route
  */
 app.get('/success', function(req, res) {
+  doSuccess(req,res);
+});
+
+async function doSuccess(req, res)
+{
+  const session = await stripe.checkout.sessions.retrieve(req.query.session_id);
+  res.render('success');
+}
+
+
+
+app.post('/success', function(req, res) {
   res.render('success');
 });
+
+ app.post('/webhook', function(req,res) {
+  
+  let event = stripe.webhooks.constructEvent(req.rawBody, req.headers['stripe-signature'], 'whsec_s7pcgQoSOkWOJqMi2IUu5ujeiRYmMvV');
+  let eventBody = event.data;
+  if (event.type === 'charge.succeeded')
+  {
+    console.log(eventBody);
+  }
+}); 
+
+
 
 /**
  * Start server
@@ -72,6 +105,32 @@ app.get('/success', function(req, res) {
 app.listen(3000, () => {
   console.log('Getting served on port 3000');
 });
+
+
+app.get('/create-checkout-session', async (req, res) => {
+  const session = await stripe.checkout.sessions.create({
+    payment_method_types: ['card'],
+    line_items: [
+      {
+        price_data: {
+          currency: 'usd',
+          product_data: {
+            name: 'Stubborn Attachments',
+            images: ['https://i.imgur.com/EHyR2nP.png'],
+          },
+          unit_amount: 2000,
+        },
+        quantity: 1,
+      },
+    ],
+    mode: 'payment',
+    success_url: `http://localhost:3000/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `http://localhost:3000/cancel`,
+  });
+
+  res.redirect(303, session.url)
+});
+
 
 app.post('/create-checkout-session', async (req, res) => {
   const session = await stripe.checkout.sessions.create({
@@ -90,7 +149,7 @@ app.post('/create-checkout-session', async (req, res) => {
       },
     ],
     mode: 'payment',
-    success_url: `http://localhost:3000/success`,
+    success_url: `http://localhost:3000/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `http://localhost:3000/cancel`,
   });
 
