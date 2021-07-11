@@ -47,27 +47,12 @@ app.engine('hbs', exphbs({
 app.set('view engine', 'hbs');
 app.use(express.static(path.join(__dirname, 'public')));
 
-/*
-app.use(express.urlencoded({verify: rawBodyBuffer, extended: true }));
-app.use(express.json({ verify: rawBodyBuffer }));
-*/
-
-
-
-
 /**
  * Home route
  */
 app.get('/', function(req, res) {
   res.render('index');
 });
-
-/**
-NOTE: This seems to add no value when the smart checkout API is available, so I deleted it.   
-* Checkout route
-*/
-
-
 
 function getProductInfo(key_value, key_name) {
   //if key is undefined, we'll default to 'id'
@@ -106,32 +91,6 @@ async function doSuccess(req, res)
   });
 }
 
-
-
-app.post('/success', function(req, res) {
-  res.render('success');
-});
-
- app.post('/webhook', function(req,res) {
-  
-  let event = stripe.webhooks.constructEvent(req.rawBody, req.headers['stripe-signature'], 'whsec_s7pcgQoSOkWOJqMi2IUu5ujeiRYmMvV');
-  let eventBody = event.data;
-  if (event.type === 'charge.succeeded')
-  {
-    console.log(eventBody);
-  }
-}); 
-
-
-
-/**
- * Start server
- */
-app.listen(3000, () => {
-  console.log('Getting served on port 3000');
-});
-
-
 app.get('/create-checkout-session', async (req, res) => {
   let productInfo = getProductInfo(req.query.item)[0];
   const session = await stripe.checkout.sessions.create({
@@ -159,3 +118,9 @@ app.get('/create-checkout-session', async (req, res) => {
   res.redirect(303, session.url)
 });
 
+/**
+ * Start server
+ */
+ app.listen(3000, () => {
+  console.log('Getting served on port 3000');
+});

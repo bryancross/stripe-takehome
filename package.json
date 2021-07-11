@@ -1,7 +1,7 @@
 {
   "name": "sa-takehome-project-node",
   "version": "1.0.0",
-  "description": "SA Takehome Project",
+  "description": "BRKC - SA Takehome Project",
   "scripts": {
     "start": "node app.js"
   },
