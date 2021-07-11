@@ -5,7 +5,8 @@ const exphbs = require('express-handlebars')
 const bodyParser = require('body-parser');
 const { exception } = require('console');
 //This doesn't seem ideal to commit to a repo
-const stripe = require('stripe')('sk_test_51JAzCYHvF1PnZH9PItbISxEqbtauawKEOabrBPnzx2RevgGBItDBLEWdszj69VpdfjBAsSzYZ76Ortcm0LD3H20J00MvOAO4Ns');
+//const stripe = require('stripe')('sk_test_51JAzCYHvF1PnZH9PItbISxEqbtauawKEOabrBPnzx2RevgGBItDBLEWdszj69VpdfjBAsSzYZ76Ortcm0LD3H20J00MvOAO4Ns');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 //Useful for formatting currencies
 const formatter = new Intl.NumberFormat('en-US', {
